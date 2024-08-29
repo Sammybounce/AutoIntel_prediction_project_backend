@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Command Output Streaming</title>
+	</head>
+	<body>
+		<h1>Command Output Streaming</h1>
+		<pre id="output"></pre>
+
+		<script>
+			const outputElement = document.getElementById("output");
+
+			const eventSource = new EventSource("/stream");
+
+			eventSource.onmessage = function (event) {
+				outputElement.innerHTML += event.data + "\n";
+			};
+
+			eventSource.addEventListener("error", function (event) {
+				outputElement.innerHTML += "Error: " + event.data + "\n";
+			});
+
+			eventSource.addEventListener("end", function (event) {
+				outputElement.innerHTML += event.data + "\n";
+				eventSource.close();
+			});
+		</script>
+	</body>
+</html>
