@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/google/uuid"
@@ -17,9 +18,9 @@ var ENV = os.Getenv("APP_ENV")
 
 func PresetDefaults() {
 
-	trainModel("decision-tree-trained-model")
+	trainModel("decision-tree-model-training")
 
-	trainModel("random-forest-trained-model")
+	trainModel("random-forest-model-training")
 
 	// addVehicles()
 }
@@ -28,11 +29,14 @@ func trainModel(notebook string) {
 
 	if _, err := os.ReadFile(fmt.Sprintf("trained-data/%v.joblib", notebook)); err != nil {
 
-		errorLogger.CaptureException("trainModel--1", fmt.Errorf("%v | error: %v", notebook, err))
-
 		var trained bool
+		var cmdStr string
 
-		cmdStr := fmt.Sprintf("jupyter nbconvert --to notebook --execute notebooks/%v.ipynb --stdout", notebook)
+		if runtime.GOOS == "windows" {
+			cmdStr = fmt.Sprintf("jupyter nbconvert --to notebook --execute notebooks\\%v.ipynb --stdout", notebook)
+		} else {
+			cmdStr = fmt.Sprintf("jupyter nbconvert --to notebook --execute notebooks/%v.ipynb --stdout", notebook)
+		}
 
 		cmd := exec.Command(strings.Split(cmdStr, " ")[0], strings.Split(cmdStr, " ")[1:]...)
 
@@ -46,7 +50,7 @@ func trainModel(notebook string) {
 		}
 
 		if !trained {
-			log.Fatal("Failed to train decision tree model")
+			log.Fatal("Failed to train model")
 		}
 	}
 }

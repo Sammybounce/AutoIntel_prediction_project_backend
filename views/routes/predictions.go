@@ -14,7 +14,7 @@ func predictionsRoute(app *fiber.App) {
 		r.Get("/", middleware.AuthMiddleware, handler.GetPredictionsHandler)
 		r.Get("/details/:id", middleware.AuthMiddleware, handler.GetSinglePredictionHandler)
 		r.Get("/file/download/:id", handler.PredictionDownloadHandler)
-		r.Post("/create", middleware.AuthMiddleware, handler.CreatePredictionHandler)
+		r.Post("/create/:model/:startYear/:endYear", middleware.AuthMiddleware, handler.CreatePredictionHandler)
 
 	}, "predictions.")
 }

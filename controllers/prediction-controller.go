@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/google/uuid"
@@ -33,12 +34,22 @@ func CreatePredictionController(data *model.PredictionCreate) (r *model.Response
 
 	err = os.WriteFile(fmt.Sprintf("notebooks/temp/%v.ipynb", data.Id), []byte(tempNotebook), 0644)
 	if err != nil {
+
+		errorLogger.CaptureException("CreatePredictionController--!!!2a", err)
+
 		return nil, 500, err
 	}
 
-	var predict bool
+	var (
+		predict bool
+		cmdStr  string
+	)
 
-	cmdStr := fmt.Sprintf("jupyter nbconvert --to notebook --execute notebooks/temp/%v.ipynb --stdout", data.Id)
+	if runtime.GOOS == "windows" {
+		cmdStr = fmt.Sprintf("jupyter nbconvert --to notebook --execute notebooks\\temp\\%v.ipynb --stdout", data.Id)
+	} else {
+		cmdStr = fmt.Sprintf("jupyter nbconvert --to notebook --execute notebooks/temp/%v.ipynb --stdout", data.Id)
+	}
 
 	cmd := exec.Command(strings.Split(cmdStr, " ")[0], strings.Split(cmdStr, " ")[1:]...)
 
@@ -53,13 +64,11 @@ func CreatePredictionController(data *model.PredictionCreate) (r *model.Response
 		predict = true
 	}
 
-	if !predict {
-		os.Remove(fmt.Sprintf("notebooks/temp/%v.ipynb", data.Id))
+	os.Remove(fmt.Sprintf("notebooks/temp/%v.ipynb", data.Id))
 
+	if !predict {
 		return nil, 500, fmt.Errorf("failed to predict")
 	}
-
-	os.Remove(fmt.Sprintf("notebooks/temp/%v.ipynb", data.Id))
 
 	newFile, err := os.Open(predictionFilePath)
 	if err != nil {
@@ -74,13 +83,13 @@ func CreatePredictionController(data *model.PredictionCreate) (r *model.Response
 		return nil, 500, err
 	}
 
-	var execStatement, m string
+	var execStatement string
 
-	if data.Model == "trained-data/decision-tree-trained-model.joblib" {
-		m = "decision tree"
-	} else {
-		m = "random forest"
-	}
+	// if data.Model == "trained-data/decision-tree-trained-model.joblib" {
+	// 	m = "decision tree"
+	// } else {
+	// 	m = "random forest"
+	// }
 
 	for i, record := range records {
 		if i == 0 {
@@ -113,7 +122,7 @@ func CreatePredictionController(data *model.PredictionCreate) (r *model.Response
 			model,
 			year,
 			futureYear,
-			m,
+			data.ModelName,
 			predictedPrice,
 		)
 	}

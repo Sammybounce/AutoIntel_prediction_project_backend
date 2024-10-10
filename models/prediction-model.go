@@ -5,6 +5,7 @@ import "database/sql"
 type PredictionCreate struct {
 	Id        string `json:"id" validate:"required"`
 	Model     string `json:"model" validate:"required"`
+	ModelName string `json:"modelName" validate:"required"`
 	FilePath  string `json:"filePath" validate:"required"`
 	StartYear int    `json:"startYear" validate:"required"`
 	EndYear   int    `json:"endYear" validate:"required"`

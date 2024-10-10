@@ -22,13 +22,13 @@ import (
 
 func CreatePredictionHandler(c *fiber.Ctx) error {
 
-	m := c.FormValue("model", "decision-tree")
-	y := c.FormValue("startYear", "2025")
-	y2 := c.FormValue("numberOfYears", "2035")
+	m := c.Params("model")
+	y := c.Params("startYear")
+	y2 := c.Params("endYear")
 
-	if m != "decision-tree-model" && m != "random-forest-model" {
-		return responseWithErr(c, 400, fmt.Sprintf("Err: %v", "Model not found"))
-	}
+	// if m != "decision-tree-model" && m != "random-forest-model" {
+	// 	return responseWithErr(c, 400, fmt.Sprintf("Err: %v", "Model not found"))
+	// }
 
 	if m == "decision-tree-model" {
 		m = "trained-data/decision-tree-trained-model.joblib"
@@ -38,11 +38,17 @@ func CreatePredictionHandler(c *fiber.Ctx) error {
 
 	startYear, err := strconv.Atoi(y)
 	if err != nil {
+
+		errorLogger.CaptureException("CreatePredictionHandler--1", fmt.Errorf("%v | error: %v", y, err))
+
 		return responseWithErr(c, 400, fmt.Sprintf("Err: %v", err.Error()))
 	}
 
 	endYear, err := strconv.Atoi(y2)
 	if err != nil {
+
+		errorLogger.CaptureException("CreatePredictionHandler--2", fmt.Errorf("%v | error: %v", y, err))
+
 		return responseWithErr(c, 400, fmt.Sprintf("Err: %v", err.Error()))
 	}
 
@@ -143,6 +149,7 @@ func CreatePredictionHandler(c *fiber.Ctx) error {
 	data := &model.PredictionCreate{
 		Id:        id.String(),
 		Model:     m,
+		ModelName: strings.ReplaceAll(strings.ReplaceAll(c.Params("model"), "-", " "), "model", ""),
 		FilePath:  fmt.Sprintf("test-data/%v.csv", id.String()),
 		StartYear: startYear,
 		EndYear:   endYear,
@@ -235,7 +242,9 @@ func PredictionDownloadHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	_, err = os.ReadFile("predictions/" + c.Params("id") + ".csv")
+	var p string = "predictions/"
+
+	_, err = os.ReadFile(p + c.Params("id") + ".csv")
 	if err != nil {
 		data := [][]string{
 			{"brand", "model", "year", "future_year", "predicted_price"},
@@ -245,7 +254,7 @@ func PredictionDownloadHandler(c *fiber.Ctx) error {
 			data = append(data, []string{v.Brand, v.Model, string(v.Year), string(v.FutureYear), v.PredictedPrice})
 		}
 
-		file, err := os.Create("predictions/" + c.Params("id") + ".csv")
+		file, err := os.Create(p + c.Params("id") + ".csv")
 		if err != nil {
 			responseWithErr(c, 500, fmt.Sprintf("Failed to create file: %v", err.Error()))
 		}
@@ -265,7 +274,7 @@ func PredictionDownloadHandler(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "text/csv")
 
-	return c.SendFile("predictions/"+c.Params("id")+".csv", true)
+	return c.SendFile(p+c.Params("id")+".csv", true)
 }
 
 func GetPredictionsHandler(c *fiber.Ctx) error {

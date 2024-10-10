@@ -42,6 +42,10 @@ pip install joblib
 
 
 
+pip install numpy
+
+
+
 go install github.com/pressly/goose/v3/cmd/goose@latest
 
 
@@ -59,6 +63,7 @@ cd migration
 
 
 goose postgres postgres://DB_USER:DB_PASSWORD:@DB_HOST:DB_PORT/DB_NAME up
+goose postgres postgres://postgres:postgres@localhost:5432/ai-project up
 
 
 in your postgreSQL terminal/cmd/shell run CREATE DATABASE ai-project
